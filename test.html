@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Comparison Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="number"], button {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .savings {
+            background-color: #e8f5e9;
+        }
+        .total-savings {
+            font-weight: bold;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Loan Comparison Calculator</h1>
+        <div class="input-group">
+            <label for="loanAmount">Loan Amount (₹)</label>
+            <input type="number" id="loanAmount" value="50000">
+        </div>
+        <div class="input-group">
+            <label for="tenure">Tenure (months)</label>
+            <input type="number" id="tenure" value="12">
+        </div>
+        <button onclick="calculateLoans()">Calculate</button>
+        
+        <table id="comparisonTable">
+            <tr>
+                <th></th>
+                <th>Abhi Loans</th>
+                <th>Volt Money</th>
+                <th>Cost savings</th>
+            </tr>
+        </table>
+        
+        <div id="totalSavings" class="total-savings"></div>
+    </div>
+
+    <script>
+        function calculateLoans() {
+            const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+            const tenure = parseInt(document.getElementById('tenure').value);
+            
+            const abhiLoan = calculateLoanDetails('Abhi Loans', 16, 1000, loanAmount, tenure);
+            const voltMoney = calculateLoanDetails('Volt Money', 10.49, 1499, loanAmount, tenure);
+            
+            const costSavings = {
+                interestCost: (abhiLoan.interestCost - voltMoney.interestCost).toFixed(0),
+                processingFees: (voltMoney.processingFees - abhiLoan.processingFees).toFixed(0),
+                processingFeesAfterGST: (voltMoney.processingFeesAfterGST - abhiLoan.processingFeesAfterGST).toFixed(0)
+            };
+            
+            const totalSavings = parseInt(costSavings.interestCost) - parseInt(costSavings.processingFeesAfterGST);
+            
+            updateTable(abhiLoan, voltMoney, costSavings, loanAmount, tenure);
+            document.getElementById('totalSavings').textContent = `Total Savings in taking LAMF from Volt Money: ₹${totalSavings}`;
+        }
+        
+        function calculateLoanDetails(company, roi, processingFee, loanAmount, tenure) {
+            const monthlyRate = roi / 12 / 100;
+            const emi = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, tenure)) / (Math.pow(1 + monthlyRate, tenure) - 1);
+            const totalInterest = emi * tenure - loanAmount;
+            const pfAfterGST = processingFee * 1.18;
+            const flatROI = (totalInterest / loanAmount / tenure * 12 * 100).toFixed(2);
+            
+            return {
+                company,
+                interestCost: totalInterest.toFixed(0),
+                processingFees: processingFee,
+                processingFeesAfterGST: pfAfterGST.toFixed(0),
+                flatROI: `${flatROI}%`
+            };
+        }
+        
+        function updateTable(abhiLoan, voltMoney, costSavings, loanAmount, tenure) {
+            const table = document.getElementById('comparisonTable');
+            table.innerHTML = `
+                <tr>
+                    <th></th>
+                    <th>Abhi Loans</th>
+                    <th>Volt Money</th>
+                    <th>Cost savings</th>
+                </tr>
+                <tr>
+                    <td>Loan amount</td>
+                    <td>₹${loanAmount}</td>
+                    <td>₹${loanAmount}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>ROI (Reducing)</td>
+                    <td>16%</td>
+                    <td>10.49%</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Tenure (months)</td>
+                    <td>${tenure}</td>
+                    <td>${tenure}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Interest cost for tenure</td>
+                    <td>₹${abhiLoan.interestCost}</td>
+                    <td>₹${voltMoney.interestCost}</td>
+                    <td class="savings">₹${costSavings.interestCost}</td>
+                </tr>
+                <tr>
+                    <td>Processing fees</td>
+                    <td>₹${abhiLoan.processingFees}</td>
+                    <td>₹${voltMoney.processingFees}</td>
+                    <td class="savings">-₹${costSavings.processingFees}</td>
+                </tr>
+                <tr>
+                    <td>Processing fees after GST</td>
+                    <td>₹${abhiLoan.processingFeesAfterGST}</td>
+                    <td>₹${voltMoney.processingFeesAfterGST}</td>
+                    <td class="savings">-₹${costSavings.processingFeesAfterGST}</td>
+                </tr>
+                <tr>
+                    <td>Flat ROI</td>
+                    <td>${abhiLoan.flatROI}</td>
+                    <td>${voltMoney.flatROI}</td>
+                    <td></td>
+                </tr>
+            `;
+        }
+        
+        // Initial calculation on page load
+        calculateLoans();
+    </script>
+</body>
+</html>
